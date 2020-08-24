@@ -47,6 +47,15 @@ void ApiController::addTransaction(const std::shared_ptr<HttpServer::Request> &r
       remove0x(hash);
       remove0x(sig);
 
+      if(hash.size() != sizeof(Hash)*2) {
+        returnErrorResponse("Invalid 'hash' value", response);
+        return;
+      }
+      if(sig.size() != sizeof(Signature)*2) {
+        returnErrorResponse("Invalid 'sig' value", response);
+        return;
+      }
+
       Input input = {hexStrToHash(hash), index, hexStrToSig(sig)};
       tx.inputs.push_back(input);
     }

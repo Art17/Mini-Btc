@@ -1,7 +1,7 @@
 //
 // Created by artem on 11.08.20.
 //
-
+#include <sodium.h>
 #include "client_http.hpp"
 #include "server_http.hpp"
 
@@ -19,6 +19,11 @@ int main() {
   // HTTP-server at port 8080 using 1 thread
   // Unless you do more heavy non-threaded processing in the resources,
   // 1 thread is usually faster than several threads
+  if (sodium_init() < 0) {
+    std::cout << "libsodium failed to initialize" << std::endl;
+    return 0;
+  }
+
   HttpServer server;
   ApiController apiController;
   server.config.port = 2826;

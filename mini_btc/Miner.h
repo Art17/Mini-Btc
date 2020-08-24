@@ -13,6 +13,7 @@
 #include "Blockchain.h"
 #include "mini_btc/data_types/Utxo.h"
 #include "mini_btc/data_types/data_types.h"
+#include <sodium.h>
 
 enum TransactionCheckResult { Valid,
                               AddedToMempool,
@@ -21,6 +22,12 @@ enum TransactionCheckResult { Valid,
                               AlreadySpentOutput,
                               InvalidOutputAmount,
                               InvalidSignature };
+
+struct UTXOValue
+{
+  bool isSpent;
+  PubKey publicKey;
+};
 
 class Miner {
 public:
@@ -34,11 +41,11 @@ public:
 protected:
   TransactionCheckResult checkInputs(const Transaction &) const;
   TransactionCheckResult checkOutputs(const Transaction &) const;
-  TransactionCheckResult checkSigs(const Transaction &) const;
+  TransactionCheckResult checkSig(const Hash &txHash, const PubKey& pubKey, const Signature& sig) const;
 
 private:
   Blockchain *blockchain;
-  std::unordered_map<UTXO, bool> utxoMap;
+  std::unordered_map<UTXO, UTXOValue> utxoMap;
   std::queue<Transaction> mempool;
   std::thread miningThread;
 

@@ -29,9 +29,6 @@ TransactionCheckResult Miner::addTransaction(const Transaction &tx) {
   txCheckStatus = checkOutputs(tx);
   if(txCheckStatus != Valid)
     return txCheckStatus;
-  txCheckStatus = checkSigs(tx);
-  if(txCheckStatus != Valid)
-    return txCheckStatus;
 
   mempool.push(tx);
   cv.notify_all();
@@ -78,7 +75,7 @@ void Miner::mineTransaction(const Transaction &tx)
   uint32_t outputIndex = 0;
   for(const auto &output : tx.outputs) {
     UTXO utxo{txHash, outputIndex++};
-    utxoMap[utxo] = true;
+    utxoMap[utxo] = UTXOValue{false, output.key};
   }
 
   invalidateUtxo(tx);
@@ -91,7 +88,7 @@ void Miner::invalidateUtxo(const Transaction& tx)
 {
   for(const auto &input : tx.inputs) {
     UTXO utxo{input.hash, input.index};
-    utxoMap[utxo] = false;
+    utxoMap[utxo].isSpent = true;
   }
 
 }
@@ -104,13 +101,18 @@ TransactionCheckResult Miner::checkInputs(const Transaction &tx) const {
     if(utxoItr == utxoMap.end())
       return UnknownInputHash;
     else {
-      if(!utxoItr->second)
+      if(utxoItr->second.isSpent)
         return AlreadySpentOutput;
       else
       {
         const auto &tempUtxoItr = tempUtxo.find(utxo);
         if(tempUtxoItr != tempUtxo.end() && tempUtxoItr->second)
           return AlreadySpentOutput;
+
+        TransactionCheckResult txCheckStatus = checkSig(tx.calculateHash(), utxoItr->second.publicKey, input.sig);
+        if(txCheckStatus != Valid)
+          return txCheckStatus;
+
         tempUtxo[utxo] = true;
       }
     }
@@ -126,8 +128,19 @@ TransactionCheckResult Miner::checkOutputs(const Transaction &tx) const  {
   return Valid;
 }
 
-TransactionCheckResult Miner::checkSigs(const Transaction &tx) const  {
-  //TODO: implement signature checking
+TransactionCheckResult Miner::checkSig(const Hash &txHash, const PubKey& pubKey, const Signature& sig) const  {
+  unsigned char unsigned_message[txHash.size()];
+  unsigned long long unsigned_message_len;
+
+  unsigned char signed_message[sig.size() + txHash.size()];
+  unsigned long long signed_message_len = sig.size() + txHash.size();
+  std::copy(sig.begin(), sig.end(), signed_message);
+  std::copy(txHash.begin(), txHash.end(), signed_message + sig.size());
+
+  if (crypto_sign_open(unsigned_message, &unsigned_message_len,
+                       signed_message, signed_message_len, pubKey.begin()) != 0) {
+    return InvalidSignature;
+  }
 
   return Valid;
 }
