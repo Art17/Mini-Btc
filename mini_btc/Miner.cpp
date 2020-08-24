@@ -23,12 +23,16 @@ Miner::~Miner()
 
 TransactionCheckResult Miner::addTransaction(const Transaction &tx) {
   TransactionCheckResult txCheckStatus;
-  txCheckStatus = checkInputs(tx);
+  uint32_t inputAmount;
+  uint32_t outputAmount;
+  txCheckStatus = checkInputs(tx, &inputAmount);
   if(txCheckStatus != Valid)
     return txCheckStatus;
-  txCheckStatus = checkOutputs(tx);
+  txCheckStatus = checkOutputs(tx, &outputAmount);
   if(txCheckStatus != Valid)
     return txCheckStatus;
+  if(inputAmount != 0 && outputAmount > inputAmount)
+    return InvalidOutputAmount;
 
   mempool.push(tx);
   cv.notify_all();
@@ -75,7 +79,7 @@ void Miner::mineTransaction(const Transaction &tx)
   uint32_t outputIndex = 0;
   for(const auto &output : tx.outputs) {
     UTXO utxo{txHash, outputIndex++};
-    utxoMap[utxo] = UTXOValue{false, output.key};
+    utxoMap[utxo] = UTXOValue{false, output.key, output.amount};
   }
 
   invalidateUtxo(tx);
@@ -93,7 +97,8 @@ void Miner::invalidateUtxo(const Transaction& tx)
 
 }
 
-TransactionCheckResult Miner::checkInputs(const Transaction &tx) const {
+TransactionCheckResult Miner::checkInputs(const Transaction &tx, uint32_t* amount) const {
+  *amount = 0;
   std::unordered_map<UTXO, bool> tempUtxo;
   for(const auto &input : tx.inputs) {
     UTXO utxo{input.hash, input.index};
@@ -112,7 +117,7 @@ TransactionCheckResult Miner::checkInputs(const Transaction &tx) const {
         TransactionCheckResult txCheckStatus = checkSig(tx.calculateHash(), utxoItr->second.publicKey, input.sig);
         if(txCheckStatus != Valid)
           return txCheckStatus;
-
+        *amount += utxoItr->second.amount;
         tempUtxo[utxo] = true;
       }
     }
@@ -120,10 +125,12 @@ TransactionCheckResult Miner::checkInputs(const Transaction &tx) const {
   return Valid;
 }
 
-TransactionCheckResult Miner::checkOutputs(const Transaction &tx) const  {
+TransactionCheckResult Miner::checkOutputs(const Transaction &tx, uint32_t* amount) const  {
+  *amount = 0;
   for(const auto &output : tx.outputs) {
     if(output.amount == 0)
       return InvalidOutputAmount;
+    *amount += output.amount;
   }
   return Valid;
 }
@@ -139,6 +146,7 @@ TransactionCheckResult Miner::checkSig(const Hash &txHash, const PubKey& pubKey,
 
   if (crypto_sign_open(unsigned_message, &unsigned_message_len,
                        signed_message, signed_message_len, pubKey.begin()) != 0) {
+    std::cout << "Invalid signature for transaction 0x" << hashToHexStr(txHash) << std::endl;
     return InvalidSignature;
   }
 

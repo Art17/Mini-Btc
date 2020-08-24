@@ -24,7 +24,7 @@ int main()
   if (sodium_init() < 0) {
     /* panic! the library couldn't be initialized, it is not safe to use */
   }
-  std::string txHash = "3BCE02D274ED8E656BE742F2571451380B55D7E54856A862471A4183EB48D6F8";
+  std::string txHash = "F208279F9A039B0232660311D0723168E9BC07318C78D1FF6D1C0123A76BC150";
   #define HASH_SIZE_IN_BYTES 32
   unsigned char messageBuffer[HASH_SIZE_IN_BYTES];
 

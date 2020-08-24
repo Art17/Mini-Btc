@@ -81,6 +81,25 @@ int main() {
                          "}"
                          "]"
                          "}";
+  std::string outputGreaterThanInput = "{"
+                        "\"outputs\": ["
+                        "{"
+                        "\"key\": \"0x0493f48e3d5ff56c8e8da005f3d4471d694103694b611a91592f3a04d02fdf29\","
+                        "\"amount\": 89999999"
+                        "},"
+                        "{"
+                        "\"key\": \"0xef220c2983cc459bd4928cef19a26c7c03821502495141e021a5754dad2c1e10\","
+                        "\"amount\": 29999999"
+                        "}"
+                        "],"
+                        "\"inputs\": ["
+                        "{"
+                        "\"hash\": \"0xECA999415A749308245688CC7027AFBD76FC861309F5BBE3A2BEAADABA707D6A\","
+                        "\"sig\": \"0xACD5785BA43BEE5E6C2E1433EBC9CD72CB03C1E2D99F69A3982A3D80B0CFBEA683AD03849569E4E653A6970FFE77092A01EDBFC445260604EF3566DFC13C750D\","
+                        "\"index\": 1"
+                        "}"
+                        "]"
+                        "}";
   /* valid input valid sig
    * tx hash - 0x3BCE02D274ED8E656BE742F2571451380B55D7E54856A862471A4183EB48D6F8
    * */
@@ -88,22 +107,22 @@ int main() {
                          "\"outputs\": ["
                          "{"
                          "\"key\": \"0x0493f48e3d5ff56c8e8da005f3d4471d694103694b611a91592f3a04d02fdf29\","
-                         "\"amount\": 80000000"
+                         "\"amount\": 8000000"
                          "},"
                          "{"
                          "\"key\": \"0xef220c2983cc459bd4928cef19a26c7c03821502495141e021a5754dad2c1e10\","
-                         "\"amount\": 20000000"
+                         "\"amount\": 2000000"
                          "}"
                          "],"
                          "\"inputs\": ["
                          "{"
                          "\"hash\": \"0xECA999415A749308245688CC7027AFBD76FC861309F5BBE3A2BEAADABA707D6A\","
-                         "\"sig\": \"0x25D48BFEC38AB3E0ACD50CEAAB2E10B6194261D7F08E8DA1FDC71284D6C8F7B27EFED6ED85F621184DE33E81C89A589559245ECC03F97DD0F5EFD9151F84790F\","
+                         "\"sig\": \"0x8E0AE95547EA0CFBF957BBF9F00123EB2833A6D5817F2194970CB7A2E7E3E0938BA7EF5F91BA66CB0AF1F06DE2F039A9AC0DFE0B244F174B4D6925B4B76FD009\","
                          "\"index\": 1"
                          "}"
                          "]"
                          "}";
-  std::vector<std::string> txs = {genesisTx, nonExistingInputTx, validInpInvalidSig, validTx};
+  std::vector<std::string> txs = {genesisTx, nonExistingInputTx, validInpInvalidSig, outputGreaterThanInput, validTx};
 
   // Synchronous request examples
   {
@@ -115,6 +134,7 @@ int main() {
         auto r2 = client.request("POST", "/transaction", tx);
         cout << "Response content: " << r2->content.rdbuf() << endl
              << endl;
+        sleep(1); // wait for transaction to be mined
       }
 
       cout << "Example GET request to http://localhost:"+ std::to_string(serverPort) +"/blocks" << endl;

@@ -27,6 +27,7 @@ struct UTXOValue
 {
   bool isSpent;
   PubKey publicKey;
+  uint32_t amount;
 };
 
 class Miner {
@@ -39,8 +40,8 @@ public:
   static uint32_t countZeros(uint8_t x);
 
 protected:
-  TransactionCheckResult checkInputs(const Transaction &) const;
-  TransactionCheckResult checkOutputs(const Transaction &) const;
+  TransactionCheckResult checkInputs(const Transaction &, uint32_t* amount) const;
+  TransactionCheckResult checkOutputs(const Transaction &, uint32_t* amount) const;
   TransactionCheckResult checkSig(const Hash &txHash, const PubKey& pubKey, const Signature& sig) const;
 
 private:
