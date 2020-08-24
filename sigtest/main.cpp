@@ -23,6 +23,7 @@ int main()
 {
   if (sodium_init() < 0) {
     /* panic! the library couldn't be initialized, it is not safe to use */
+    return 0;
   }
   std::string txHash = "F208279F9A039B0232660311D0723168E9BC07318C78D1FF6D1C0123A76BC150";
   #define HASH_SIZE_IN_BYTES 32

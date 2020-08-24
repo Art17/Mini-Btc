@@ -57,7 +57,7 @@ private:
 
   void mineTransactions();
   void mineTransaction(const Transaction& tx);
-  void invalidateUtxo(const Transaction& tx);
+  void markInputsAsSpent(const Transaction& tx);
 };
 
 

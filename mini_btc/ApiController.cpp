@@ -80,6 +80,11 @@ void ApiController::addTransaction(const std::shared_ptr<HttpServer::Request> &r
 
       remove0x(key);
 
+      if(key.size() != sizeof(Hash)*2) {
+        returnErrorResponse("Invalid 'key' value", response);
+        return;
+      }
+
       Output output = {amount, hexStrToHash(key)};
       tx.outputs.push_back(output);
     }

@@ -136,6 +136,7 @@ int main() {
              << endl;
         sleep(1); // wait for transaction to be mined
       }
+      sleep(1);
 
       cout << "Example GET request to http://localhost:"+ std::to_string(serverPort) +"/blocks" << endl;
       auto r2 = client.request("GET", "/blocks");

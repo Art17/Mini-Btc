@@ -74,6 +74,9 @@ void Miner::mineTransaction(const Transaction &tx)
     block.nonce += 1;
     block.updateRawDataNonce(blockRawData);
     blockHash = sha256bytes(blockRawData);
+
+    if(isShuttingDown)
+      return;
   }
 
   uint32_t outputIndex = 0;
@@ -82,13 +85,13 @@ void Miner::mineTransaction(const Transaction &tx)
     utxoMap[utxo] = UTXOValue{false, output.key, output.amount};
   }
 
-  invalidateUtxo(tx);
+  markInputsAsSpent(tx);
   blockchain->addBlock(block);
   std::cout << "Mined block " << block.height << " with hash " << "0x" << hashToHexStr(blockHash) << " (nonce: " << block.nonce << " )"
             << " transaction 0x" << hashToHexStr(txHash) << std::endl;
 }
 
-void Miner::invalidateUtxo(const Transaction& tx)
+void Miner::markInputsAsSpent(const Transaction& tx)
 {
   for(const auto &input : tx.inputs) {
     UTXO utxo{input.hash, input.index};
@@ -100,6 +103,8 @@ void Miner::invalidateUtxo(const Transaction& tx)
 TransactionCheckResult Miner::checkInputs(const Transaction &tx, uint32_t* amount) const {
   *amount = 0;
   std::unordered_map<UTXO, bool> tempUtxo;
+  Hash txHash = tx.calculateHash();
+
   for(const auto &input : tx.inputs) {
     UTXO utxo{input.hash, input.index};
     const auto &utxoItr = utxoMap.find(utxo);
@@ -114,7 +119,7 @@ TransactionCheckResult Miner::checkInputs(const Transaction &tx, uint32_t* amoun
         if(tempUtxoItr != tempUtxo.end() && tempUtxoItr->second)
           return AlreadySpentOutput;
 
-        TransactionCheckResult txCheckStatus = checkSig(tx.calculateHash(), utxoItr->second.publicKey, input.sig);
+        TransactionCheckResult txCheckStatus = checkSig(txHash, utxoItr->second.publicKey, input.sig);
         if(txCheckStatus != Valid)
           return txCheckStatus;
         *amount += utxoItr->second.amount;
